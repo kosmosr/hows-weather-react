@@ -9,7 +9,7 @@ interface LocationType {
   updateLocation: (location: GeoLocationSensorState, currentCity: string, currentProvince: string) => void
   updateLocationWeather: (temp: number, weatherText: string, lat?: number, lon?: number) => void
   baseLocationInfo: CurrentLocationInfoType
-  currentLocationInfo: CurrentLocationInfoType
+  currentLocationInfo: CurrentLocationInfoType,
 }
 
 interface CurrentLocationInfoType {
@@ -23,8 +23,6 @@ interface CurrentLocationInfoType {
 
 // 存储了用户的位置 可以修改
 const LOCATION_STORAGE_KEY = 'user_location'
-// 存储了用户的定位位置(只存获取定位上的)
-const BASE_LOCATION_STORAGE_KEY = 'base_user_location'
 
 const LocationContext = createContext({} as LocationType)
 
@@ -43,6 +41,8 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
     latitude: 0,
     longitude: 0
   })
+  // 当前是否手动选择了城市信息
+  const [isManualLocationSelected, setIsManualLocationSelected] = useState(false)
   const baseGeoState = useGeolocation()
 
   // useRef 来存储上一次由 baseGeoState 成功处理的位置
@@ -51,7 +51,7 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   // --- Effect 1: Sync from Live Geolocation to State/LocalStorage ---
   useEffect(() => {
     const { latitude, longitude, loading, ...rest } = baseGeoState
-    if (!loading && latitude !== null && longitude != null) {
+    if (!loading && latitude !== null && longitude != null && !isManualLocationSelected) {
       const currentLiveLocation = { latitude, longitude, loading, ...rest }
 
       if (JSON.stringify(currentLiveLocation) !== JSON.stringify(lastProcessedGeoLocationRef)) {
@@ -108,6 +108,8 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
           localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(newLocation))
           setLocation(newLocation)
           lastProcessedGeoLocationRef.current = newLocation
+          // 设置手动选择标志
+          setIsManualLocationSelected(true)
         }
       } catch (e) {
         console.error('Context: Error writing location on manual update:', e)
@@ -163,7 +165,7 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
     currentLocationInfo, // 当前位置信息
     baseLocationInfo, // 基础位置信息
     updateLocation, // 提供更新函数
-    updateLocationWeather
+    updateLocationWeather,
   }
 
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>
