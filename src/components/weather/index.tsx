@@ -80,32 +80,32 @@ export default function Weather() {
 
   // 定义一个辅助函数来根据天气文本获取背景样式
   const getBackgroundStyle = (weatherText: string) => {
-    let backgroundStyle = {}
+    let backgroundImage = ''
     // 默认背景 (深色渐变)
-    const defaultStyle = { background: 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.6))' }
+    const defaultBackgroundImage = 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.6))'
 
     // 根据天气文本设置不同的背景渐变
     // 你可以根据实际需要调整颜色或使用背景图片 (backgroundImage: 'url(...)')
     if (weatherText.includes('晴')) {
       // 晴天
-      backgroundStyle = { background: 'linear-gradient(to bottom, #A2CFFE, #1E90FF)' } // 蓝色渐变
+      backgroundImage = 'linear-gradient(to bottom, #A2CFFE, #1E90FF)' // 蓝色渐变
     } else if (weatherText.includes('云') || weatherText.includes('阴')) {
       // 多云或阴天
-      backgroundStyle = { background: 'linear-gradient(to bottom, #B0C4DE, #778899)' } // 灰色渐变
+      backgroundImage = 'linear-gradient(to bottom, #B0C4DE, #778899)' // 灰色渐变
     } else if (weatherText.includes('雨')) {
       // 雨天
-      backgroundStyle = { background: 'linear-gradient(to bottom, #708090, #778899)' } // 深蓝色渐变
+      backgroundImage = 'linear-gradient(to bottom, #708090, #778899)' // 深蓝色渐变
     } else if (weatherText.includes('雪')) {
       // 雪天
-      backgroundStyle = { background: 'linear-gradient(to bottom, #eef2f3, #8e9eab)' } // 浅灰色/白色渐变
+      backgroundImage = 'linear-gradient(to bottom, #eef2f3, #8e9eab)' // 浅灰色/白色渐变
     } else {
       // 其他天气或默认情况
-      backgroundStyle = defaultStyle
+      backgroundImage = defaultBackgroundImage
     }
 
     // 返回包含背景样式和过渡效果的对象
     return {
-      ...backgroundStyle,
+      backgroundImage: backgroundImage,
       backgroundSize: 'cover', // 背景覆盖整个区域
       backgroundPosition: 'center', // 背景居中
       transition: 'background 0.5s ease-in-out' // 添加背景过渡动画
