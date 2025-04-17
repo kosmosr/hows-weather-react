@@ -2,7 +2,6 @@ import { ChangeEvent, JSX, useRef, useState } from 'react'
 import { Clock, HousePlus, MapPin, Navigation, Search, X } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { useLocationContext } from '@/hooks/location-provider.tsx'
 import { GeoApiDataType, geoLookupApi } from '@/lib/api.ts'
 import WeatherIcon from '@/components/ui/weather-icon.tsx'
@@ -190,7 +189,7 @@ export default function CityDrawer() {
             </div>
           </DrawerHeader>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             {searchList.length > 0 ? (
               <div className="flex flex-col gap-2 p-2">
                 {searchList.map((item: SearchCityInfo) => (
@@ -225,6 +224,7 @@ export default function CityDrawer() {
                       <Clock className="h-4 w-4 text-white/60" />
                       <span className="text-sm text-white/60">最近访问</span>
                     </div>
+
                     {recentCities.map((city) => (
                       <CityCard
                         onClick={() => selectCity(city)}
@@ -237,7 +237,7 @@ export default function CityDrawer() {
                 )}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
