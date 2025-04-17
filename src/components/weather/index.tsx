@@ -4,7 +4,7 @@ import WeatherMetrics from '@/components/weather/WeatherMetrics.tsx'
 import HourlyForecast from '@/components/weather/HourlyForecast.tsx'
 import WeeklyForecast from '@/components/weather/WeeklyForecast.tsx'
 import { useLocationContext } from '@/hooks/location-provider.tsx'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getWeatherApi, GetWeatherApiDataType } from '@/lib/api.ts'
 import WeatherIcon from '@/components/ui/weather-icon.tsx'
 import { CityDrawerInfo } from '@/components/weather/types.ts'
@@ -12,7 +12,7 @@ import { getStoredRecentCities } from '@/lib/utils.ts'
 
 const RECENT_STORAGE_KEY = 'recent_cities_key'
 
-const updateRecentCityWeather = ((currentCity: string, currentProvince: string, weather: GetWeatherApiDataType) => {
+const updateRecentCityWeather = (weather: GetWeatherApiDataType, currentCity?: string, currentProvince?: string, ) => {
   console.log('updateRecentCityWeather', currentCity, currentProvince, weather)
   if (!currentCity || !currentProvince) return
 
@@ -39,10 +39,10 @@ const updateRecentCityWeather = ((currentCity: string, currentProvince: string, 
   } catch (e) {
     console.error('Error updating recent cities:', e)
   }
-})
+}
 
 export default function Weather() {
-  const { location, province: currentProvince, city: currentCity , updateLocationWeather} = useLocationContext()
+  const { location, updateLocationWeather, currentLocationInfo } = useLocationContext()
   const [weatherData, setWeatherData] = useState<GetWeatherApiDataType>({
     temp: '',
     feelsLike: '',
@@ -55,25 +55,28 @@ export default function Weather() {
   const [tempMax, setTempMax] = useState('')
   const [tempMin, setTempMin] = useState('')
 
-
-
   useEffect(() => {
-    if (!location.loading && location.latitude && location.longitude) {
+    // console.log(`before update current: ${JSON.stringify(currentLocationInfo)}`)
+    if (currentLocationInfo.latitude && currentLocationInfo.longitude
+      && currentLocationInfo.name && currentLocationInfo.province
+      && !currentLocationInfo.temp
+      && !currentLocationInfo.weatherText) {
       const fetchWeather = async () => {
-        const response = await getWeatherApi(`${location.longitude},${location.latitude}`)
+        const response = await getWeatherApi(`${currentLocationInfo.longitude},${currentLocationInfo.latitude}`)
         const { code, data }: { code: number; data: GetWeatherApiDataType } = response
         if (code === 200) {
           setWeatherData(data)
           setTempMax(data.dailyWeatherList[0].tempMax)
           setTempMin(data.dailyWeatherList[0].tempMin)
           // 更新最近访问的城市天气
-          updateRecentCityWeather(currentCity, currentProvince, data)
-          updateLocationWeather(parseInt(data.temp), data.text, currentCity, currentProvince)
+          console.log(`before update current: ${JSON.stringify(currentLocationInfo)}`)
+          updateRecentCityWeather(data, currentLocationInfo.name, currentLocationInfo.province)
+          updateLocationWeather(parseInt(data.temp), data.text, currentLocationInfo.name, currentLocationInfo.province)
         }
       }
       fetchWeather()
     }
-  }, [location])
+  }, [currentLocationInfo])
 
   // 定义一个辅助函数来根据天气文本获取背景样式
   const getBackgroundStyle = (weatherText: string) => {
@@ -85,7 +88,7 @@ export default function Weather() {
     // 你可以根据实际需要调整颜色或使用背景图片 (backgroundImage: 'url(...)')
     if (weatherText.includes('晴')) {
       // 晴天
-      backgroundStyle = { background: 'linear-gradient(to bottom, #A2CFFE, #4682B4)' } // 蓝色渐变
+      backgroundStyle = { background: 'linear-gradient(to bottom, #A2CFFE 20%, #1E90FF 80%)' } // 蓝色渐变
     } else if (weatherText.includes('云') || weatherText.includes('阴')) {
       // 多云或阴天
       backgroundStyle = { background: 'linear-gradient(to bottom, #B0C4DE, #778899)' } // 灰色渐变

@@ -11,11 +11,11 @@ import { getStoredRecentCities, MAX_RECENT_CITIES, RECENT_STORAGE_KEY } from '@/
 
 interface SearchCityInfo {
   name: string
-  adm1: string
+  province: string
   adm2: string
   showName: string
-  lat: string
-  lon: string
+  lat: number
+  lon: number
 }
 
 export default function CityDrawer() {
@@ -23,16 +23,18 @@ export default function CityDrawer() {
   const [search, setSearch] = useState('')
   const [searchList, setSearchList] = useState<SearchCityInfo[]>([])
   const [recentCities, setRecentCities] = useState<CityDrawerInfo[]>(getStoredRecentCities)
-  const { city, province, temp, weatherText, updateLocation } = useLocationContext()
+  const { location, currentLocationInfo, updateLocation } = useLocationContext()
   // 1. 使用ref存储定时器ID
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
 
   // 模拟数据，实际应该从API获取
   const currentLocation: CityDrawerInfo = {
-    name: city,
-    province: province,
-    temp: temp,
-    weather: weatherText
+    name: currentLocationInfo.name || '加载中',
+    province: currentLocationInfo.province || '加载中',
+    temp: currentLocationInfo.temp || 0,
+    weather: currentLocationInfo.weatherText || '晴' ,
+    lon: currentLocationInfo.longitude,
+    lat: currentLocationInfo.latitude
   }
 
   const openChange = (open: boolean) => {
@@ -63,7 +65,7 @@ export default function CityDrawer() {
             const adm1 = item.adm1 || ''
             return {
               name: item.name,
-              adm1: item.adm1,
+              province: item.adm1,
               adm2: item.adm2,
               lat: item.lat,
               lon: item.lon,
@@ -95,7 +97,7 @@ export default function CityDrawer() {
     }, 500) // 300ms的延迟
   }
 
-  const selectCity = (selectedCity: SearchCityInfo) => {
+  const selectCity = (selectedCity: (SearchCityInfo | CityDrawerInfo)) => {
     // // 1. 准备要更新的地理位置信息
     const newLocation = {
       loading: false,
@@ -103,8 +105,8 @@ export default function CityDrawer() {
       altitude: null,
       altitudeAccuracy: null,
       heading: null,
-      latitude: parseFloat(selectedCity.lat),
-      longitude: parseFloat(selectedCity.lon),
+      latitude: selectedCity.lat,
+      longitude: selectedCity.lon,
       speed: null,
       timestamp: new Date().getTime()
     }
@@ -112,7 +114,9 @@ export default function CityDrawer() {
     // 2. 更新最近访问列表（使用不可变方式）
     const cityToRecent: CityDrawerInfo = {
       name: selectedCity.name,
-      province: selectedCity.adm1,
+      province: selectedCity.province,
+      lat: selectedCity.lat,
+      lon: selectedCity.lon,
       temp: -1,
       weather: ''
     }
@@ -128,7 +132,7 @@ export default function CityDrawer() {
     localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(updatedRecentCities))
 
     // 4. 调用上下文更新位置
-    updateLocation(newLocation, selectedCity.name, selectedCity.adm1)
+    updateLocation(newLocation, selectedCity.name, selectedCity.province)
 
     // 5. 清理并关闭抽屉
     setSearch('')
@@ -137,7 +141,7 @@ export default function CityDrawer() {
   }
 
   const CityCard = ({ city, icon, onClick }: { city: CityDrawerInfo; icon: JSX.Element; onClick?: () => void }) => (
-    <div className="flex cursor-pointer items-center justify-between rounded-lg p-4 transition-colors hover:bg-white/5">
+    <div onClick={onClick} className="flex cursor-pointer items-center justify-between rounded-lg p-4 transition-colors hover:bg-white/5">
       <div className="flex items-center gap-3">
         {icon}
         <div className="flex flex-col">
@@ -213,7 +217,7 @@ export default function CityDrawer() {
                       <span className="text-sm text-white/60">最近访问</span>
                     </div>
                     {recentCities.map((city) => (
-                      <CityCard key={city.name} city={city} icon={<MapPin className="h-5 w-5 text-white/60" />} />
+                      <CityCard onClick={() => selectCity(city)} key={city.name} city={city} icon={<MapPin className="h-5 w-5 text-white/60" />} />
                     ))}
                   </div>
                 )}

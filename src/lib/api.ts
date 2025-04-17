@@ -8,8 +8,8 @@ export interface GeoApiDataType {
   name: string // 城市名称
   adm1: string // 省
   adm2: string // 市
-  lat: string // 纬度
-  lon: string // 经度
+  lat: number // 纬度
+  lon: number // 经度
 }
 
 export interface GetWeatherApiDataType {

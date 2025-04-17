@@ -8,14 +8,23 @@ interface LocationType {
   loading: boolean
   error?: Error | IGeolocationPositionError
   updateLocation: (location: GeoLocationSensorState, currentCity: string, currentProvince: string) => void
-  updateLocationWeather: (temp: number, weatherText: string, updateCity: string, updateProvince: string) => void
-  province: string
-  city: string
-  temp: number
-  weatherText: string
+  updateLocationWeather: (temp: number, weatherText: string, updateCity?: string, updateProvince?: string) => void
+  currentLocationInfo: CurrentLocationInfoType
 }
 
+interface CurrentLocationInfoType {
+  name?: string // 城市名称
+  province?: string // 省
+  latitude: number // 纬度
+  longitude: number // 经度
+  temp?: number // 温度
+  weatherText?: string // 天气状况
+}
+
+// 存储了用户的位置 可以修改
 const LOCATION_STORAGE_KEY = 'user_location'
+// 存储了用户的定位位置(只存获取定位上的)
+const BASE_LOCATION_STORAGE_KEY = 'base_user_location'
 
 const LocationContext = createContext({} as LocationType)
 
@@ -26,10 +35,10 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   }, [])
 
   const [location, setLocation] = useState(getStoredLocation)
-  const [province, setProvince] = useState('')
-  const [city, setCity] = useState('')
-  const [temp, setTemp] = useState(0)
-  const [weatherText, setWeatherText] = useState('')
+  const [currentLocationInfo, setCurrentLocationInfo] = useState<CurrentLocationInfoType>({
+    latitude: 0,
+    longitude: 0
+  })
 
   const baseGeoState = useGeolocation({
     timeout: 5000,
@@ -42,7 +51,7 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   // --- Effect 1: Sync from Live Geolocation to State/LocalStorage ---
   useEffect(() => {
     const { latitude, longitude, loading, error, ...rest } = baseGeoState
-    if (!loading && !error && latitude !== null) {
+    if (!loading && !error && latitude !== null && longitude != null) {
       const currentLiveLocation = { latitude, longitude, ...rest }
 
       if (JSON.stringify(currentLiveLocation) !== JSON.stringify(lastProcessedGeoLocationRef)) {
@@ -54,6 +63,7 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
         if (JSON.stringify(currentLiveLocation) !== JSON.stringify(storedLocation)) {
           try {
             localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(currentLiveLocation))
+            // localStorage.setItem(BASE_LOCATION_STORAGE_KEY, JSON.stringify(currentLiveLocation))
             setLocation(currentLiveLocation)
           } catch (e) {
             console.error('Error saving location to localStorage:', e)
@@ -97,8 +107,6 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
         if (newLocationString !== JSON.stringify(location)) {
           localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(newLocation))
           setLocation(newLocation)
-          setCity(currentCity)
-          setProvince(currentProvince)
           lastProcessedGeoLocationRef.current = newLocation
         }
       } catch (e) {
@@ -109,42 +117,45 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   )
 
   const updateLocationWeather = useCallback(
-    (temp: number, weatherText: string, updateCity: string, updateProvince: string) => {
-      console.log(`Context: Manual updateLocationWeather called: ${JSON.stringify(temp)}`)
-      if (updateCity === city && updateProvince === province) {
-        setTemp(temp)
-        setWeatherText(weatherText)
+    (temp: number, weatherText: string, updateCity?: string, updateProvince?: string) => {
+      console.log(`Context: Manual updateLocationWeather called`)
+      if (updateCity === currentLocationInfo.name && updateProvince === currentLocationInfo.province) {
+        console.log(`Context: updateLocationWeather: ${JSON.stringify(currentLocationInfo)}`)
+        setCurrentLocationInfo({
+          ...currentLocationInfo,
+          temp,
+          weatherText
+        })
       }
     },
-    [location]
+    [currentLocationInfo]
   )
-
-  // const updateCurrentLocationInfo
 
   useEffect(() => {
     if (location && location.latitude !== null && location.longitude !== null) {
-      const call = async (lat: string, lon: string) => {
-        const response = await geoLookupApi(`${lon},${lat}`)
+      const call = async () => {
+        const response = await geoLookupApi(`${location.longitude},${location.latitude}`)
         const { code, data }: { data: GeoApiDataType[]; code: number } = response
         if (code === 200 && data.length > 0) {
-          setProvince(data[0].adm1)
-          setCity(data[0].name)
+          setCurrentLocationInfo({
+            latitude: location.latitude,
+            longitude: location.longitude,
+            name: data[0].name,
+            province: data[0].adm1
+          })
         }
       }
-      call(location.latitude, location.longitude)
+      call()
     }
   }, [location])
 
   const value: LocationType = {
     location, // 同步后的位置
+    currentLocationInfo, // 当前位置信息
     loading: baseGeoState.loading,
     error: baseGeoState.error,
     updateLocation, // 提供更新函数
     updateLocationWeather,
-    province,
-    city,
-    temp,
-    weatherText
   }
 
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>
