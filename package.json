@@ -16,6 +16,7 @@
     "@vitejs/plugin-basic-ssl": "^2.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^16.5.0",
     "lucide-react": "^0.487.0",
     "qweather-icons": "^1.6.0",
     "react": "^19.0.0",

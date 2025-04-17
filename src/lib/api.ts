@@ -30,7 +30,7 @@ export interface DailyWeatherData {
   text: string // 天气状况的文字描述
 }
 
-const API_PREFIX = 'http://localhost:8080/weather'
+const API_PREFIX = import.meta.env.VITE_API_PREFIX + '/weather'
 
 // 获取地理位置
 export const geoLookupApi = async (location: string) => {
