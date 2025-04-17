@@ -23,7 +23,7 @@ export default function CityDrawer() {
   const [search, setSearch] = useState('')
   const [searchList, setSearchList] = useState<SearchCityInfo[]>([])
   const [recentCities, setRecentCities] = useState<CityDrawerInfo[]>(getStoredRecentCities)
-  const { location, currentLocationInfo,baseLocationInfo, updateLocation } = useLocationContext()
+  const { baseLocationInfo, updateLocation } = useLocationContext()
   // 1. 使用ref存储定时器ID
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
 
@@ -32,7 +32,7 @@ export default function CityDrawer() {
     name: baseLocationInfo.name || '加载中',
     province: baseLocationInfo.province || '加载中',
     temp: baseLocationInfo.temp || 0,
-    weather: baseLocationInfo.weatherText || '晴' ,
+    weather: baseLocationInfo.weatherText || '晴',
     lon: baseLocationInfo.longitude,
     lat: baseLocationInfo.latitude
   }
@@ -97,7 +97,7 @@ export default function CityDrawer() {
     }, 500) // 300ms的延迟
   }
 
-  const selectCity = (selectedCity: (SearchCityInfo | CityDrawerInfo)) => {
+  const selectCity = (selectedCity: SearchCityInfo | CityDrawerInfo) => {
     // // 1. 准备要更新的地理位置信息
     const newLocation = {
       loading: false,
@@ -143,7 +143,10 @@ export default function CityDrawer() {
   }
 
   const CityCard = ({ city, icon, onClick }: { city: CityDrawerInfo; icon: JSX.Element; onClick?: () => void }) => (
-    <div onClick={onClick} className="flex cursor-pointer items-center justify-between rounded-lg p-4 transition-colors hover:bg-white/5">
+    <div
+      onClick={onClick}
+      className="flex cursor-pointer items-center justify-between rounded-lg p-4 transition-colors hover:bg-white/5"
+    >
       <div className="flex items-center gap-3">
         {icon}
         <div className="flex flex-col">
@@ -208,7 +211,11 @@ export default function CityDrawer() {
                     <Navigation className="h-4 w-4 text-white/60" />
                     <span className="text-sm text-white/60">当前位置</span>
                   </div>
-                  <CityCard onClick={() => selectCity(currentLocation)} city={currentLocation} icon={<MapPin className="h-5 w-5 text-blue-400" />} />
+                  <CityCard
+                    onClick={() => selectCity(currentLocation)}
+                    city={currentLocation}
+                    icon={<MapPin className="h-5 w-5 text-blue-400" />}
+                  />
                 </div>
 
                 {/* 最近访问 */}
@@ -219,7 +226,12 @@ export default function CityDrawer() {
                       <span className="text-sm text-white/60">最近访问</span>
                     </div>
                     {recentCities.map((city) => (
-                      <CityCard onClick={() => selectCity(city)} key={city.name} city={city} icon={<MapPin className="h-5 w-5 text-white/60" />} />
+                      <CityCard
+                        onClick={() => selectCity(city)}
+                        key={city.name}
+                        city={city}
+                        icon={<MapPin className="h-5 w-5 text-white/60" />}
+                      />
                     ))}
                   </div>
                 )}
