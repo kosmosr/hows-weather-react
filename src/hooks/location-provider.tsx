@@ -1,14 +1,14 @@
 import { createContext, JSX, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { useGeolocation } from 'react-use'
 import { GeoLocationSensorState, IGeolocationPositionError } from 'react-use/lib/useGeolocation'
 import { GeoApiDataType, geoLookupApi } from '@/lib/api.ts'
+import { useGeolocation } from 'react-use'
 
 interface LocationType {
-  location: GeoLocationSensorState
-  loading: boolean
+  location: GeoLocationSensorState,
   error?: Error | IGeolocationPositionError
   updateLocation: (location: GeoLocationSensorState, currentCity: string, currentProvince: string) => void
-  updateLocationWeather: (temp: number, weatherText: string, updateCity?: string, updateProvince?: string) => void
+  updateLocationWeather: (temp: number, weatherText: string, lat?: number, lon?: number) => void
+  baseLocationInfo: CurrentLocationInfoType
   currentLocationInfo: CurrentLocationInfoType
 }
 
@@ -28,31 +28,31 @@ const BASE_LOCATION_STORAGE_KEY = 'base_user_location'
 
 const LocationContext = createContext({} as LocationType)
 
-export const LocationProvider = ({ children }: { children: JSX.Element }) => {
-  const getStoredLocation = useCallback(() => {
-    const stored = localStorage.getItem(LOCATION_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : null
-  }, [])
+const getStoredLocation = () => {
+  const stored = localStorage.getItem(LOCATION_STORAGE_KEY)
+  return stored ? JSON.parse(stored) : null
+}
 
+export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   const [location, setLocation] = useState(getStoredLocation)
+  const [baseLocationInfo, setBaseLocationInfo] = useState<CurrentLocationInfoType>({
+    latitude: 0,
+    longitude: 0,
+  })
   const [currentLocationInfo, setCurrentLocationInfo] = useState<CurrentLocationInfoType>({
     latitude: 0,
     longitude: 0
   })
-
-  const baseGeoState = useGeolocation({
-    timeout: 5000,
-    enableHighAccuracy: true
-  })
+  const baseGeoState = useGeolocation()
 
   // useRef 来存储上一次由 baseGeoState 成功处理的位置
   const lastProcessedGeoLocationRef = useRef({})
 
   // --- Effect 1: Sync from Live Geolocation to State/LocalStorage ---
   useEffect(() => {
-    const { latitude, longitude, loading, error, ...rest } = baseGeoState
-    if (!loading && !error && latitude !== null && longitude != null) {
-      const currentLiveLocation = { latitude, longitude, ...rest }
+    const { latitude, longitude, loading, ...rest } = baseGeoState
+    if (!loading && latitude !== null && longitude != null) {
+      const currentLiveLocation = { latitude, longitude, loading, ...rest }
 
       if (JSON.stringify(currentLiveLocation) !== JSON.stringify(lastProcessedGeoLocationRef)) {
         console.log(`Location updated: ${JSON.stringify(currentLiveLocation)}`)
@@ -73,7 +73,7 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
         console.log("Context: Live location hasn't changed since last processing. No update triggered by geo hook.")
       }
     }
-  }, [baseGeoState, getStoredLocation])
+  }, [baseGeoState])
 
   // --- Effect 2: Sync from Storage Event to State ---
   useEffect(() => {
@@ -117,15 +117,24 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   )
 
   const updateLocationWeather = useCallback(
-    (temp: number, weatherText: string, updateCity?: string, updateProvince?: string) => {
+    (temp: number, weatherText: string, lat?: number, lon?: number) => {
       console.log(`Context: Manual updateLocationWeather called`)
-      if (updateCity === currentLocationInfo.name && updateProvince === currentLocationInfo.province) {
+      if (lat === currentLocationInfo.latitude && lon === currentLocationInfo.longitude) {
         console.log(`Context: updateLocationWeather: ${JSON.stringify(currentLocationInfo)}`)
         setCurrentLocationInfo({
           ...currentLocationInfo,
           temp,
           weatherText
         })
+        if (baseLocationInfo.longitude === 0 && baseLocationInfo.latitude === 0) {
+          //
+          console.log(`Context: updateBaseLocationInfo: ${JSON.stringify(currentLocationInfo)}`)
+          setBaseLocationInfo({
+            ...currentLocationInfo,
+            temp,
+            weatherText
+          })
+        }
       }
     },
     [currentLocationInfo]
@@ -152,10 +161,9 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   const value: LocationType = {
     location, // 同步后的位置
     currentLocationInfo, // 当前位置信息
-    loading: baseGeoState.loading,
-    error: baseGeoState.error,
+    baseLocationInfo, // 基础位置信息
     updateLocation, // 提供更新函数
-    updateLocationWeather,
+    updateLocationWeather
   }
 
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>

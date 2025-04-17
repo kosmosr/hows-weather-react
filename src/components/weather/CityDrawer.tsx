@@ -23,18 +23,18 @@ export default function CityDrawer() {
   const [search, setSearch] = useState('')
   const [searchList, setSearchList] = useState<SearchCityInfo[]>([])
   const [recentCities, setRecentCities] = useState<CityDrawerInfo[]>(getStoredRecentCities)
-  const { location, currentLocationInfo, updateLocation } = useLocationContext()
+  const { location, currentLocationInfo,baseLocationInfo, updateLocation } = useLocationContext()
   // 1. 使用ref存储定时器ID
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
 
   // 模拟数据，实际应该从API获取
   const currentLocation: CityDrawerInfo = {
-    name: currentLocationInfo.name || '加载中',
-    province: currentLocationInfo.province || '加载中',
-    temp: currentLocationInfo.temp || 0,
-    weather: currentLocationInfo.weatherText || '晴' ,
-    lon: currentLocationInfo.longitude,
-    lat: currentLocationInfo.latitude
+    name: baseLocationInfo.name || '加载中',
+    province: baseLocationInfo.province || '加载中',
+    temp: baseLocationInfo.temp || 0,
+    weather: baseLocationInfo.weatherText || '晴' ,
+    lon: baseLocationInfo.longitude,
+    lat: baseLocationInfo.latitude
   }
 
   const openChange = (open: boolean) => {
@@ -112,24 +112,26 @@ export default function CityDrawer() {
     }
 
     // 2. 更新最近访问列表（使用不可变方式）
-    const cityToRecent: CityDrawerInfo = {
-      name: selectedCity.name,
-      province: selectedCity.province,
-      lat: selectedCity.lat,
-      lon: selectedCity.lon,
-      temp: -1,
-      weather: ''
-    }
-    // 使用 filter 创建一个不包含当前选中城市的新数组
-    const filteredCities = recentCities.filter(
-      (item) => !(item.name === cityToRecent.name && item.province === cityToRecent.province)
-    )
-    // 将新城市添加到数组开头，并限制数量
-    const updatedRecentCities = [cityToRecent, ...filteredCities].slice(0, MAX_RECENT_CITIES)
+    if (selectedCity.name !== baseLocationInfo.name && selectedCity.province !== baseLocationInfo.province) {
+      const cityToRecent: CityDrawerInfo = {
+        name: selectedCity.name,
+        province: selectedCity.province,
+        lat: selectedCity.lat,
+        lon: selectedCity.lon,
+        temp: -1,
+        weather: ''
+      }
+      // 使用 filter 创建一个不包含当前选中城市的新数组
+      const filteredCities = recentCities.filter(
+        (item) => !(item.name === cityToRecent.name && item.province === cityToRecent.province)
+      )
+      // 将新城市添加到数组开头，并限制数量
+      const updatedRecentCities = [cityToRecent, ...filteredCities].slice(0, MAX_RECENT_CITIES)
 
-    // 3. 更新组件状态和 localStorage
-    setRecentCities(updatedRecentCities)
-    localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(updatedRecentCities))
+      // 3. 更新组件状态和 localStorage
+      setRecentCities(updatedRecentCities)
+      localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(updatedRecentCities))
+    }
 
     // 4. 调用上下文更新位置
     updateLocation(newLocation, selectedCity.name, selectedCity.province)
@@ -206,7 +208,7 @@ export default function CityDrawer() {
                     <Navigation className="h-4 w-4 text-white/60" />
                     <span className="text-sm text-white/60">当前位置</span>
                   </div>
-                  <CityCard city={currentLocation} icon={<MapPin className="h-5 w-5 text-blue-400" />} />
+                  <CityCard onClick={() => selectCity(currentLocation)} city={currentLocation} icon={<MapPin className="h-5 w-5 text-blue-400" />} />
                 </div>
 
                 {/* 最近访问 */}

@@ -12,13 +12,13 @@ import { getStoredRecentCities } from '@/lib/utils.ts'
 
 const RECENT_STORAGE_KEY = 'recent_cities_key'
 
-const updateRecentCityWeather = (weather: GetWeatherApiDataType, currentCity?: string, currentProvince?: string, ) => {
-  console.log('updateRecentCityWeather', currentCity, currentProvince, weather)
-  if (!currentCity || !currentProvince) return
+const updateRecentCityWeather = (weather: GetWeatherApiDataType, lat: number, lon: number, ) => {
+  console.log('updateRecentCityWeather', lat, lon, weather)
+  if (!lat || !lon) return
 
   try {
     const recentCities: CityDrawerInfo[] = getStoredRecentCities()
-    const cityIndex = recentCities.findIndex((c) => c.name === currentCity && c.province === currentProvince)
+    const cityIndex = recentCities.findIndex((c) => c.lat === lat && c.lon === lon)
     if (cityIndex > -1) {
       const cityToUpdate = recentCities[cityIndex]
       // 创建更新后的城市对象，添加天气信息
@@ -70,8 +70,8 @@ export default function Weather() {
           setTempMin(data.dailyWeatherList[0].tempMin)
           // 更新最近访问的城市天气
           console.log(`before update current: ${JSON.stringify(currentLocationInfo)}`)
-          updateRecentCityWeather(data, currentLocationInfo.name, currentLocationInfo.province)
-          updateLocationWeather(parseInt(data.temp), data.text, currentLocationInfo.name, currentLocationInfo.province)
+          updateRecentCityWeather(data, currentLocationInfo.latitude, currentLocationInfo.longitude)
+          updateLocationWeather(parseInt(data.temp), data.text, currentLocationInfo.latitude, currentLocationInfo.longitude)
         }
       }
       fetchWeather()
@@ -88,7 +88,7 @@ export default function Weather() {
     // 你可以根据实际需要调整颜色或使用背景图片 (backgroundImage: 'url(...)')
     if (weatherText.includes('晴')) {
       // 晴天
-      backgroundStyle = { background: 'linear-gradient(to bottom, #A2CFFE 20%, #1E90FF 80%)' } // 蓝色渐变
+      backgroundStyle = { background: 'linear-gradient(to bottom, #A2CFFE, #1E90FF)' } // 蓝色渐变
     } else if (weatherText.includes('云') || weatherText.includes('阴')) {
       // 多云或阴天
       backgroundStyle = { background: 'linear-gradient(to bottom, #B0C4DE, #778899)' } // 灰色渐变
