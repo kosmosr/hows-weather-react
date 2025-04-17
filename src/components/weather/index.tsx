@@ -108,7 +108,6 @@ export default function Weather() {
       backgroundImage: backgroundImage,
       backgroundSize: 'cover', // 背景覆盖整个区域
       backgroundPosition: 'center', // 背景居中
-      transition: 'background 0.5s ease-in-out' // 添加背景过渡动画
     }
   }
 
