@@ -18,7 +18,12 @@ export interface GetWeatherApiDataType {
   humidity: string // 湿度
   icon: string // 天气状况的图标代码
   text: string // 天气状况的文字描述
+  windDir: string // 风向
+  windScale: string // 风力等级
+  windSpeed: string // 风速
   dailyWeatherList: DailyWeatherData[] // 未来几天的天气预报
+  hourlyWeatherList: HourlyWeather[] // 未来几小时的天气预报
+  indicesList: WeatherIndices[] // 生活指数
 }
 
 export interface DailyWeatherData {
@@ -30,11 +35,26 @@ export interface DailyWeatherData {
   text: string // 天气状况的文字描述
 }
 
-const API_PREFIX = import.meta.env.VITE_API_PREFIX + '/weather'
+export interface HourlyWeather {
+  fxDate: string // 预报时间
+  temp: string // 温度
+  icon: string // 天气状况的图标代码
+  text: string // 天气状况的文字描述
+  windSpeed: string // 风速
+}
+
+export interface WeatherIndices {
+  name: string // 生活指数类型的名称
+  type: string // 生活指数类型
+  category: string // 生活指数预报级别名称
+  text: string // 生活指数预报的详细描述文本
+}
+
+const API_PREFIX = import.meta.env.VITE_API_PREFIX + '/api/weather'
 
 // 获取地理位置
 export const geoLookupApi = async (location: string) => {
-  const response = await fetch(`${API_PREFIX}/geo?location=${location}`)
+  const response = await fetch(`${API_PREFIX}/geo/lookup?location=${location}`)
   const data: ResponseState = await response.json()
   return data
 }

@@ -1,4 +1,5 @@
 import { LucideIcon, Thermometer, Waves, Wind } from 'lucide-react'
+import { GetWeatherApiDataType } from '@/lib/api.ts'
 
 interface WeatherMetricProps {
   icon: LucideIcon
@@ -19,11 +20,11 @@ const WeatherMetric = ({ icon: Icon, value, label }: WeatherMetricProps) => {
   )
 }
 
-export default function WeatherMetrics({feelsLike, humidity} : {feelsLike: string, humidity: string}) {
+export default function WeatherMetrics({ weatherData }: { weatherData: GetWeatherApiDataType }) {
   const metrics = [
-    { icon: Thermometer, value: feelsLike + '°', label: '体感温度' },
-    { icon: Wind, value: '54/优', label: '空气质量' },
-    { icon: Waves, value: humidity + '%', label: '湿度' }
+    { icon: Thermometer, value: weatherData.feelsLike + '°', label: '体感温度' },
+    { icon: Wind, value: `${weatherData.windSpeed}km/h`, label: `${weatherData.windDir}${weatherData.windScale}级` },
+    { icon: Waves, value: weatherData.humidity + '%', label: '湿度' }
   ]
 
   return (

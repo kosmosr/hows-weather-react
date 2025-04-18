@@ -9,6 +9,7 @@ import { getWeatherApi, GetWeatherApiDataType } from '@/lib/api.ts'
 import WeatherIcon from '@/components/ui/weather-icon.tsx'
 import { CityDrawerInfo } from '@/components/weather/types.ts'
 import { getStoredRecentCities } from '@/lib/utils.ts'
+import LifeIndex from '@/components/weather/LifeIndex.tsx'
 
 const RECENT_STORAGE_KEY = 'recent_cities_key'
 
@@ -49,7 +50,12 @@ export default function Weather() {
     humidity: '',
     icon: '',
     text: '',
-    dailyWeatherList: []
+    dailyWeatherList: [],
+    hourlyWeatherList: [],
+    indicesList: [],
+    windDir: '',
+    windScale: '',
+    windSpeed: '',
   })
 
   const [tempMax, setTempMax] = useState('')
@@ -139,23 +145,27 @@ export default function Weather() {
             </div>
           </div>
           <div>
-            {/*<i className={'qi-'+ weatherData.icon + '-fill text-9xl'}></i>*/}
             <WeatherIcon weatherText={weatherData.text} iconSize={140} />
           </div>
         </div>
 
         <div className="mt-6 space-y-6">
           {/*Weather metrics*/}
-          <WeatherMetrics feelsLike={weatherData.feelsLike} humidity={weatherData.humidity} />
+          <WeatherMetrics weatherData={weatherData}  />
 
           <div className="flex flex-col gap-2">
             <span className="text-white/80">每小时预报</span>
-            <HourlyForecast />
+            <HourlyForecast weatherData={weatherData} />
           </div>
 
           <div className="flex flex-col gap-2">
             <span className="text-white/80">未来预报</span>
             <WeeklyForecast temp={weatherData.temp} dailyWeatherData={weatherData.dailyWeatherList} />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-white/80">生活指数</span>
+            <LifeIndex weatherData={weatherData} />
           </div>
         </div>
       </div>
