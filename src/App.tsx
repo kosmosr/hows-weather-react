@@ -1,13 +1,14 @@
 import Weather from '@/components/weather/index'
 import { LocationProvider } from '@/hooks/location-provider.tsx'
-import { Analytics } from '@vercel/analytics/vue'
+import { Analytics } from '@vercel/analytics/react'
 
 export default function App() {
   return (
-    <Analytics>
+    <>
+      <Analytics />
       <LocationProvider>
         <Weather />
       </LocationProvider>
-    </Analytics>
+    </>
   )
 }
