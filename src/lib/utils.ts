@@ -24,3 +24,15 @@ export const getStoredRecentCities = (): CityDrawerInfo[] => {
   }
   return []
 }
+
+// --- Helper Function to Round Coordinates ---
+/**
+ * Rounds a coordinate (latitude or longitude) to 2 decimal places.
+ * Returns null if the input is null or undefined.
+ * @param coord The coordinate value
+ * @returns Rounded coordinate as a number or null
+ */
+export const roundCoordinate = (coord: number): number => {
+  // Use toFixed(2) for rounding and parseFloat to convert back to number
+  return parseFloat(coord.toFixed(2));
+};

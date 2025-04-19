@@ -2,14 +2,15 @@ import { createContext, JSX, useCallback, useContext, useEffect, useRef, useStat
 import { GeoLocationSensorState, IGeolocationPositionError } from 'react-use/lib/useGeolocation'
 import { GeoApiDataType, geoLookupApi } from '@/lib/api.ts'
 import { useGeolocation } from 'react-use'
+import { roundCoordinate } from '@/lib/utils.ts'
 
 interface LocationType {
-  location: GeoLocationSensorState,
+  location: GeoLocationSensorState
   error?: Error | IGeolocationPositionError
-  updateLocation: (location: GeoLocationSensorState, currentCity: string, currentProvince: string) => void
+  updateLocation: (location: GeoLocationSensorState) => void
   updateLocationWeather: (temp: number, weatherText: string, lat?: number, lon?: number) => void
   baseLocationInfo: CurrentLocationInfoType
-  currentLocationInfo: CurrentLocationInfoType,
+  currentLocationInfo: CurrentLocationInfoType
 }
 
 interface CurrentLocationInfoType {
@@ -35,7 +36,7 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   const [location, setLocation] = useState(getStoredLocation)
   const [baseLocationInfo, setBaseLocationInfo] = useState<CurrentLocationInfoType>({
     latitude: 0,
-    longitude: 0,
+    longitude: 0
   })
   const [currentLocationInfo, setCurrentLocationInfo] = useState<CurrentLocationInfoType>({
     latitude: 0,
@@ -52,18 +53,24 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   useEffect(() => {
     const { latitude, longitude, loading, ...rest } = baseGeoState
     if (!loading && latitude !== null && longitude != null && !isManualLocationSelected) {
-      const currentLiveLocation = { latitude, longitude, loading, ...rest }
+      const currentLiveLocation = {
+        latitude: roundCoordinate(latitude),
+        longitude: roundCoordinate(longitude),
+        loading,
+        ...rest
+      }
 
       if (JSON.stringify(currentLiveLocation) !== JSON.stringify(lastProcessedGeoLocationRef)) {
         console.log(`Location updated: ${JSON.stringify(currentLiveLocation)}`)
         // 更新 Ref，表示我们已经处理了这个新的实时位置
         lastProcessedGeoLocationRef.current = currentLiveLocation
 
-        const storedLocation = getStoredLocation()
-        if (JSON.stringify(currentLiveLocation) !== JSON.stringify(storedLocation)) {
+        const storedLocation: GeoLocationSensorState = getStoredLocation()
+        if (
+          storedLocation &&
+          !(storedLocation.latitude == currentLiveLocation.latitude && storedLocation.longitude == currentLiveLocation.longitude)) {
           try {
             localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(currentLiveLocation))
-            // localStorage.setItem(BASE_LOCATION_STORAGE_KEY, JSON.stringify(currentLiveLocation))
             setLocation(currentLiveLocation)
           } catch (e) {
             console.error('Error saving location to localStorage:', e)
@@ -75,36 +82,17 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
     }
   }, [baseGeoState])
 
-  // --- Effect 2: Sync from Storage Event to State ---
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === LOCATION_STORAGE_KEY) {
-        console.log('Context: Storage event detected')
-        try {
-          const newValue = event.newValue ? JSON.parse(event.newValue) : null
-          if (JSON.stringify(newValue) !== JSON.stringify(location)) {
-            console.log(`Location updated from storage: ${JSON.stringify(newValue)}`)
-            setLocation(newValue)
-          }
-        } catch (e) {
-          console.error('Error parsing location from localStorage:', e)
-          setLocation(null)
-        }
-      }
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [location]) // 依赖 location
-
   // --- Function: Manual Update ---
   const updateLocation = useCallback(
-    (newLocation: GeoLocationSensorState, currentCity: string, currentProvince: string) => {
+    (newLocation: GeoLocationSensorState) => {
       console.log(`Context: Manual updateLocation called: ${JSON.stringify(newLocation)}`)
+      const rawLocation = {
+        lat: roundCoordinate(location.latitude),
+        lon: roundCoordinate(location.longitude)
+      }
 
       try {
-        const newLocationString = JSON.stringify(newLocation)
-        if (newLocationString !== JSON.stringify(location)) {
+        if (!(newLocation.longitude === rawLocation.lon && newLocation.latitude === rawLocation.lat)) {
           localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(newLocation))
           setLocation(newLocation)
           lastProcessedGeoLocationRef.current = newLocation
@@ -145,12 +133,12 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
   useEffect(() => {
     if (location && location.latitude !== null && location.longitude !== null) {
       const call = async () => {
-        const response = await geoLookupApi(`${location.longitude},${location.latitude}`)
+        const response = await geoLookupApi(`${roundCoordinate(location.longitude)},${roundCoordinate(location.latitude)}`)
         const { code, data }: { data: GeoApiDataType[]; code: number } = response
         if (code === 200 && data.length > 0) {
           setCurrentLocationInfo({
-            latitude: location.latitude,
-            longitude: location.longitude,
+            latitude: roundCoordinate(location.latitude),
+            longitude: roundCoordinate(location.longitude),
             name: data[0].name,
             province: data[0].adm1
           })
@@ -165,7 +153,7 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
     currentLocationInfo, // 当前位置信息
     baseLocationInfo, // 基础位置信息
     updateLocation, // 提供更新函数
-    updateLocationWeather,
+    updateLocationWeather
   }
 
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>

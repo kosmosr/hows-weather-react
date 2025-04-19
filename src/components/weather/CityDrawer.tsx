@@ -6,7 +6,7 @@ import { useLocationContext } from '@/hooks/location-provider.tsx'
 import { GeoApiDataType, geoLookupApi } from '@/lib/api.ts'
 import WeatherIcon from '@/components/ui/weather-icon.tsx'
 import { CityDrawerInfo } from '@/components/weather/types.ts'
-import { getStoredRecentCities, MAX_RECENT_CITIES, RECENT_STORAGE_KEY } from '@/lib/utils.ts'
+import { getStoredRecentCities, MAX_RECENT_CITIES, RECENT_STORAGE_KEY, roundCoordinate } from '@/lib/utils.ts'
 
 interface SearchCityInfo {
   name: string
@@ -22,7 +22,7 @@ export default function CityDrawer() {
   const [search, setSearch] = useState('')
   const [searchList, setSearchList] = useState<SearchCityInfo[]>([])
   const [recentCities, setRecentCities] = useState<CityDrawerInfo[]>(getStoredRecentCities)
-  const { baseLocationInfo, updateLocation } = useLocationContext()
+  const { baseLocationInfo,currentLocationInfo, updateLocation } = useLocationContext()
   // 1. 使用ref存储定时器ID
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
 
@@ -104,14 +104,17 @@ export default function CityDrawer() {
       altitude: null,
       altitudeAccuracy: null,
       heading: null,
-      latitude: selectedCity.lat,
-      longitude: selectedCity.lon,
+      latitude: roundCoordinate(selectedCity.lat),
+      longitude: roundCoordinate(selectedCity.lon),
       speed: null,
       timestamp: new Date().getTime()
     }
 
     // 2. 更新最近访问列表（使用不可变方式）
-    if (selectedCity.name !== baseLocationInfo.name && selectedCity.province !== baseLocationInfo.province) {
+    if (selectedCity.name !== baseLocationInfo.name &&
+      selectedCity.province !== baseLocationInfo.province &&
+      selectedCity.name !== currentLocationInfo.name &&
+      selectedCity.province !== currentLocationInfo.province) {
       const cityToRecent: CityDrawerInfo = {
         name: selectedCity.name,
         province: selectedCity.province,
@@ -133,7 +136,7 @@ export default function CityDrawer() {
     }
 
     // 4. 调用上下文更新位置
-    updateLocation(newLocation, selectedCity.name, selectedCity.province)
+    updateLocation(newLocation)
 
     // 5. 清理并关闭抽屉
     setSearch('')

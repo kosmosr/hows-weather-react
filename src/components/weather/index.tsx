@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { getWeatherApi, GetWeatherApiDataType } from '@/lib/api.ts'
 import WeatherIcon from '@/components/ui/weather-icon.tsx'
 import { CityDrawerInfo } from '@/components/weather/types.ts'
-import { getStoredRecentCities } from '@/lib/utils.ts'
+import { getStoredRecentCities, roundCoordinate } from '@/lib/utils.ts'
 import LifeIndex from '@/components/weather/LifeIndex.tsx'
 
 const RECENT_STORAGE_KEY = 'recent_cities_key'
@@ -19,7 +19,7 @@ const updateRecentCityWeather = (weather: GetWeatherApiDataType, lat: number, lo
 
   try {
     const recentCities: CityDrawerInfo[] = getStoredRecentCities()
-    const cityIndex = recentCities.findIndex((c) => c.lat === lat && c.lon === lon)
+    const cityIndex = recentCities.findIndex((c) => roundCoordinate(c.lat) === lat && roundCoordinate(c.lon) === lon)
     if (cityIndex > -1) {
       const cityToUpdate = recentCities[cityIndex]
       // 创建更新后的城市对象，添加天气信息
