@@ -13,7 +13,7 @@ import LifeIndex from '@/components/weather/LifeIndex.tsx'
 
 const RECENT_STORAGE_KEY = 'recent_cities_key'
 
-const updateRecentCityWeather = (weather: GetWeatherApiDataType, lat: number, lon: number, ) => {
+const updateRecentCityWeather = (weather: GetWeatherApiDataType, lat: number, lon: number,) => {
   console.log('updateRecentCityWeather', lat, lon, weather)
   if (!lat || !lon) return
 
@@ -86,34 +86,34 @@ export default function Weather() {
 
   // 定义一个辅助函数来根据天气文本获取背景样式
   const getBackgroundStyle = (weatherText: string) => {
-    let backgroundImage = ''
-    // 默认背景 (深色渐变)
-    const defaultBackgroundImage = 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.6))'
+    let backgroundColor = ''
+    // 默认背景 (深色)
+    const defaultBackgroundColor = '#333333' // 深灰色
 
     // 根据天气文本设置不同的背景渐变
     // 你可以根据实际需要调整颜色或使用背景图片 (backgroundImage: 'url(...)')
     if (weatherText.includes('晴')) {
       // 晴天
-      backgroundImage = 'linear-gradient(to bottom, #A2CFFE, #1E90FF)' // 蓝色渐变
+      backgroundColor = '#A2CFFE' // 淡蓝色
     } else if (weatherText.includes('云') || weatherText.includes('阴')) {
       // 多云或阴天
-      backgroundImage = 'linear-gradient(to bottom, #B0C4DE, #778899)' // 灰色渐变
-    } else if (weatherText.includes('雨')) {
+      backgroundColor = '#B0C4DE' // 灰蓝色
+    } else if (weatherText.includes('雨') || weatherText.includes('雾')) {
       // 雨天
-      backgroundImage = 'linear-gradient(to bottom, #708090, #778899)' // 深蓝色渐变
+      backgroundColor = '#708090' // 石板灰
     } else if (weatherText.includes('雪')) {
       // 雪天
-      backgroundImage = 'linear-gradient(to bottom, #eef2f3, #8e9eab)' // 浅灰色/白色渐变
+      backgroundColor = '#eef2f3' // 淡灰色
     } else {
       // 其他天气或默认情况
-      backgroundImage = defaultBackgroundImage
+      backgroundColor = defaultBackgroundColor
     }
 
     // 返回包含背景样式和过渡效果的对象
     return {
-      backgroundImage: backgroundImage,
-      backgroundSize: 'cover', // 背景覆盖整个区域
-      backgroundPosition: 'center', // 背景居中
+      backgroundColor: backgroundColor, // 使用 backgroundColor
+      // backgroundSize: 'cover', // 对纯色背景意义不大
+      // backgroundPosition: 'center', // 对纯色背景意义不大
     }
   }
 
@@ -151,7 +151,7 @@ export default function Weather() {
 
         <div className="mt-6 space-y-6">
           {/*Weather metrics*/}
-          <WeatherMetrics weatherData={weatherData}  />
+          <WeatherMetrics weatherData={weatherData} />
 
           <div className="flex flex-col gap-2">
             <span className="text-white/80">每小时预报</span>
