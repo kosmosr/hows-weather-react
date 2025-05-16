@@ -67,8 +67,9 @@ export const LocationProvider = ({ children }: { children: JSX.Element }) => {
 
         const storedLocation: GeoLocationSensorState = getStoredLocation()
         if (
-          storedLocation &&
-          !(storedLocation.latitude == currentLiveLocation.latitude && storedLocation.longitude == currentLiveLocation.longitude)) {
+          !storedLocation ||
+          (storedLocation &&
+          !(storedLocation.latitude == currentLiveLocation.latitude && storedLocation.longitude == currentLiveLocation.longitude))) {
           try {
             localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(currentLiveLocation))
             setLocation(currentLiveLocation)

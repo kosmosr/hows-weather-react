@@ -123,7 +123,7 @@ export default function Weather() {
   return (
     <div className={`fixed inset-0 flex flex-col text-white`} style={backgroundStyle}>
       {/*Header*/}
-      <div className={`text-white'} sticky top-0 z-10 backdrop-blur-sm`}>
+      <div className={`text-white sticky top-0 z-10`}>
         <WeatherHeader />
       </div>
 
